@@ -92,7 +92,7 @@ sudo raspi-config
 ```bash
 cd /home/pi
 git clone https://github.com/drollette/W7HAK-gobox.git
-cd goBox
+cd W7HAK-gobox
 ```
 
 ### 3. Run the setup script

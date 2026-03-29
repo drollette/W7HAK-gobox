@@ -1,0 +1,53 @@
+{
+  "title": "W7HAK Go Box Telemetry",
+  "tags": ["gobox", "w7hak", "hamradio"],
+  "timezone": "browser",
+  "refresh": "10s",
+  "schemaVersion": 36,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "LiFePO4 Cell Voltages (4S)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "query": "SELECT \"cell1\", \"cell2\", \"cell3\", \"cell4\" FROM \"battery\" WHERE $timeFilter", "rawQuery": true, "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "volt", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 }, "min": 2.5, "max": 3.65 }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Thermal Sensors (°C)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "query": "SELECT \"temp1_c\", \"temp2_c\" FROM \"battery\" WHERE $timeFilter", "rawQuery": true, "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "celsius", "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10 } }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "System Power Draw",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "query": "SELECT last(\"system_current_a\") as \"Amps\", last(\"system_power_w\") as \"Watts\" FROM \"battery\" WHERE $timeFilter", "rawQuery": true, "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 10 }, { "color": "red", "value": 20 } ] } }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Solar Input",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "query": "SELECT last(\"solar_current_a\") as \"Amps\", last(\"solar_power_w\") as \"Watts\" FROM \"battery\" WHERE $timeFilter", "rawQuery": true, "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [ { "color": "blue", "value": null }, { "color": "green", "value": 1 } ] } }
+      }
+    }
+  ]
+}

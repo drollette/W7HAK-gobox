@@ -27,14 +27,8 @@ apt install -y \
 # Python dependencies
 # ---------------------------------------------------------------------------
 
-echo "==> Installing Adafruit ADS1x15 CircuitPython library..."
-pip3 install adafruit-circuitpython-ads1x15
-
-echo "==> Installing INA226 CircuitPython library..."
-pip3 install adafruit-circuitpython-ina226
-
-echo "==> Installing InfluxDB Python client..."
-pip3 install influxdb
+echo "==> Installing Python dependencies from requirements.txt..."
+pip3 install -r /home/pi/goBox/requirements.txt
 
 # ---------------------------------------------------------------------------
 # Install and enable the systemd service
