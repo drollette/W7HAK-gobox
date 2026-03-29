@@ -14,6 +14,10 @@ A field-deployable amateur radio go box (callsign **W7HAK**) with real-time batt
 | INA226 (I2C) | High-side current/power monitor for pack-level current and wattage |
 | DS18B20 (GPIO 4, 1-Wire) | Ambient and cell temperature sensors |
 
+### Bill of Materials
+
+For a complete list of hardware, sensors, and passive components required to build this system, please see the [Bill of Materials (BOM)](BOM.md).
+
 ### Voltage Measurement — Resistor Ladder
 
 The ADS1115 cannot safely measure the full pack voltage directly. A resistor ladder divides each cell-stack tap down to a range the ADC can read. The `telemetry.py` script applies the following multipliers to recover actual stack voltages, then uses subtraction to isolate each cell:
