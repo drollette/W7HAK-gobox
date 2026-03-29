@@ -27,6 +27,10 @@ The ADS1115 cannot safely measure the full pack voltage directly. A resistor lad
 
 See `/wiring_diagrams/ads1115_resistor_ladder_schematic.svg` for the full schematic.
 
+### Wiring & Schematics
+
+Complete pin-by-pin wiring instructions — including the 12V fuse block topology, custom USB-C bulkhead wiring, and RFI mitigation techniques — can be found in [wiring_diagrams/WIRING_GUIDE.md](wiring_diagrams/WIRING_GUIDE.md).
+
 ---
 
 ## Accessing the Dashboard (USB Gadget Mode)
@@ -73,7 +77,7 @@ sudo bash scripts/setup_pi.sh
 
 This will:
 - Install system packages (`python3-pip`, `i2c-tools`, `python3-smbus`)
-- Install Python libraries (`adafruit-circuitpython-ads1x15`, `w1thermsensor`, `influxdb`)
+- Install Python libraries (`adafruit-circuitpython-ads1x15`, `adafruit-circuitpython-ina226`, `influxdb`)
 - Install, enable, and start the `gobox_telemetry` systemd service
 
 ### 4. Verify the service
