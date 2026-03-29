@@ -31,7 +31,7 @@ Multipliers: Cell1=2.0, Cell2=3.2, Cell3=4.3, Cell4=5.7. Changing the resistor n
 
 - **Database:** `telemetry`
 - **Measurement:** `battery`
-- **Fields:** `cell1`–`cell4` (float, volts), `temp1_c`–`tempN_c` (float, °C, one per DS18B20 sensor found)
+- **Fields:** `cell1`–`cell4` (float, volts), `temp1_c`–`tempN_c` (float, °C, one per DS18B20 sensor found), `solar_voltage_v`, `solar_current_a`, `solar_power_w`, `system_voltage_v`, `system_current_a`, `system_power_w` (all float, from INA226 sensors)
 - No tags are written; add tags (e.g., `host`, `location`) if querying multiple nodes.
 
 ## Deployment
@@ -50,6 +50,7 @@ The setup script patches `ExecStart` in the service file to match the actual clo
 - **Single-core CPU** — keep the telemetry loop lightweight; avoid threading or async unless profiling shows a bottleneck.
 - **ADS1115 gain** is set to `1` (±6.144 V range) to safely accommodate divider output voltages. Do not raise gain without recalculating divider ratios.
 - **DS18B20** is read via raw sysfs (`/sys/bus/w1/devices/28-*/w1_slave`) rather than a library to minimize dependencies.
+- **INA226 sensors** — two units on the I2C bus: `0x40` (Solar input) and `0x41` (System load). Raw current readings from both are multiplied by `CORRECTION_FACTOR = 1.025` in software to compensate for shunt resistor tolerances. Do not remove this factor without re-measuring against a calibrated reference.
 - **USB gadget mode** — Pi static IP is `192.168.7.2` on `usb0`. Grafana on port 3000, InfluxDB on port 8086.
 
 ## 3D Models

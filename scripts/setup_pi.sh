@@ -30,8 +30,8 @@ apt install -y \
 echo "==> Installing Adafruit ADS1x15 CircuitPython library..."
 pip3 install adafruit-circuitpython-ads1x15
 
-echo "==> Installing w1thermsensor (DS18B20 helper)..."
-pip3 install w1thermsensor
+echo "==> Installing INA226 CircuitPython library..."
+pip3 install adafruit-circuitpython-ina226
 
 echo "==> Installing InfluxDB Python client..."
 pip3 install influxdb

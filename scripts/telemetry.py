@@ -24,6 +24,7 @@ import board
 import busio
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
+import adafruit_ina226
 from influxdb import InfluxDBClient
 
 logging.basicConfig(
@@ -45,6 +46,9 @@ CELL_MULTIPLIERS = {
     "cell3": 4.3,
     "cell4": 5.7,
 }
+
+# Shunt resistor correction factor — compensates for component tolerances
+CORRECTION_FACTOR = 1.025
 
 # 1-Wire sysfs base path for DS18B20
 W1_BASE = "/sys/bus/w1/devices"
@@ -103,8 +107,23 @@ def read_cell_voltages(ads) -> dict:
     return cells
 
 
-def build_influx_payload(cells: dict, temps: dict) -> list:
-    fields = {**cells}
+def read_ina226_data(ina_solar, ina_system) -> dict:
+    """
+    Read bus voltage, corrected current, and power from both INA226 sensors.
+    Current is multiplied by CORRECTION_FACTOR to account for shunt resistor tolerances.
+    """
+    return {
+        "solar_voltage_v":  round(ina_solar.bus_voltage, 4),
+        "solar_current_a":  round(ina_solar.current * CORRECTION_FACTOR, 4),
+        "solar_power_w":    round(ina_solar.power, 4),
+        "system_voltage_v": round(ina_system.bus_voltage, 4),
+        "system_current_a": round(ina_system.current * CORRECTION_FACTOR, 4),
+        "system_power_w":   round(ina_system.power, 4),
+    }
+
+
+def build_influx_payload(cells: dict, temps: dict, power: dict) -> list:
+    fields = {**cells, **power}
     for idx, (sensor_id, temp_c) in enumerate(temps.items(), start=1):
         fields[f"temp{idx}_c"] = temp_c
 
@@ -119,12 +138,17 @@ def build_influx_payload(cells: dict, temps: dict) -> list:
 # --- Main loop ---
 
 def main():
-    # Set up I2C and ADS1115
+    # Set up I2C bus (shared by all sensors)
     i2c = busio.I2C(board.SCL, board.SDA)
-    ads = ADS.ADS1115(i2c, address=0x48)
 
+    # ADS1115 — cell voltage measurement
+    ads = ADS.ADS1115(i2c, address=0x48)
     # Set gain to ±6.144 V to accommodate resistor-ladder outputs
     ads.gain = 1
+
+    # INA226 — current/power monitors
+    ina_solar  = adafruit_ina226.INA226(i2c, address=0x40)
+    ina_system = adafruit_ina226.INA226(i2c, address=0x41)
 
     # Connect to InfluxDB
     client = InfluxDBClient(host=INFLUX_HOST, port=INFLUX_PORT)
@@ -137,7 +161,8 @@ def main():
         try:
             cells = read_cell_voltages(ads)
             temps = read_ds18b20_temps()
-            payload = build_influx_payload(cells, temps)
+            power = read_ina226_data(ina_solar, ina_system)
+            payload = build_influx_payload(cells, temps, power)
             client.write_points(payload)
             log.debug("Written: %s", payload)
         except Exception as exc:
