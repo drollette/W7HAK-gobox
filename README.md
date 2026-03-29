@@ -44,7 +44,29 @@ The Pi Zero W is configured as a USB OTG gadget. When connected to a laptop via 
 
 No Wi-Fi or external network is required in the field.
 
-> **Setup reference:** Search for "Raspberry Pi Zero USB gadget mode" for instructions on enabling `dwc2` and `g_ether` overlays in `/boot/config.txt` and `/etc/modules`.
+### Enabling USB Gadget Mode on the Pi Zero W
+
+Perform these steps once on the Pi before first use:
+
+**1. Enable the `dwc2` overlay** — append to `/boot/config.txt`:
+```
+dtoverlay=dwc2
+```
+
+**2. Load the `g_ether` module at boot** — in `/etc/modules`, add a new line:
+```
+g_ether
+```
+
+**3. Assign a static IP to `usb0`** — append to `/etc/dhcpcd.conf`:
+```
+interface usb0
+static ip_address=192.168.7.2/24
+```
+
+**4. On your laptop**, configure the USB Ethernet adapter that appears with a manual IP in the same subnet, e.g. `192.168.7.1/24`. No DHCP server is needed.
+
+**5. Reboot the Pi.** The `usb0` interface will come up automatically on every subsequent boot.
 
 ---
 
