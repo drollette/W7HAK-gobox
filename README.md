@@ -31,6 +31,36 @@ The ADS1115 cannot safely measure the full pack voltage directly. A resistor lad
 
 See `/wiring_diagrams/ads1115_resistor_ladder_schematic.svg` for the full schematic.
 
+### Calibrating the Resistor Ladder
+
+Because 1% tolerance resistors still vary slightly, the default multipliers in `telemetry.py` will likely need to be tuned to your specific hardware to get pinpoint accuracy.
+
+**Step 1: Measure the True Stack Voltages**
+
+Using a calibrated digital multimeter, measure the DC voltage from the main battery ground (Pack -) to each individual cell tap on your balance lead. Write these four numbers down.
+
+- *Example:* Tap 1 might be 3.32 V, Tap 2 might be 6.65 V, Tap 3 might be 9.98 V, and Tap 4 (Total Pack) might be 13.31 V.
+
+**Step 2: Calculate the Required Adjustment**
+
+If your Grafana dashboard is showing incorrect values, you need to adjust the `CELL_MULTIPLIERS` dictionary in `scripts/telemetry.py`. Because the script uses subtractive math to isolate individual cell voltages, **you must calibrate the total stack voltage at each tap, not the individual cell voltages.**
+
+Use this formula for each tap:
+
+```
+New Multiplier = Current Multiplier × (True Voltmeter Voltage ÷ Calculated Stack Voltage)
+```
+
+*Note: You can find the "Calculated Stack Voltage" by either temporarily adding `print(stack)` to your `telemetry.py` script, or by manually adding up the individual cell voltages displayed in Grafana (e.g., Dashboard Cell 1 + Cell 2 = Tap 2 Stack Voltage).*
+
+**Step 3: Update and Restart**
+
+Edit `scripts/telemetry.py` and replace the default `CELL_MULTIPLIERS` with your newly calculated ones. Save the file and restart the service:
+
+```bash
+sudo systemctl restart gobox_telemetry
+```
+
 ### Wiring & Schematics
 
 Complete pin-by-pin wiring instructions — including the 12V fuse block topology, custom USB-C bulkhead wiring, and RFI mitigation techniques — can be found in [wiring_diagrams/WIRING_GUIDE.md](wiring_diagrams/WIRING_GUIDE.md).
