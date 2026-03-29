@@ -1,0 +1,13 @@
+[Unit]
+Description=W7HAK Go Box Telemetry Service
+After=multi-user.target network.target
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/usr/bin/python3 /home/pi/goBox/scripts/telemetry.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
