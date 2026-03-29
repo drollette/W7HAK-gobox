@@ -87,7 +87,7 @@ sudo raspi-config
 
 ```bash
 cd /home/pi
-git clone https://github.com/W7HAK/goBox.git
+git clone https://github.com/drollette/W7HAK-gobox.git
 cd goBox
 ```
 
