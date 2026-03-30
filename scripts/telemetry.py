@@ -98,8 +98,16 @@ def read_cell_voltages(ads) -> dict:
 
     The ADS1115 measures the voltage at each tap on the resistor ladder;
     subtractive logic gives the voltage contribution of each individual cell.
+
+    Hardware-level RC low-pass filtering (1kΩ / 10µF, cutoff ~16 Hz) is
+    implemented on each physical sensor line between the resistor ladder
+    output and the ADS1115 input pin.  A parallel 0.1µF ceramic capacitor
+    provides additional high-frequency RF decoupling.  This eliminates
+    switching noise from the LTC3780 charger at the analog level, so
+    aggressive software-side spike filtering is unnecessary.
     """
     # Raw tap voltages (single-ended, referenced to GND)
+    # Note: signals are hardware-filtered by RC low-pass before reaching the ADC
     taps = [
         AnalogIn(ads, ADS.P0).voltage,
         AnalogIn(ads, ADS.P1).voltage,
@@ -130,6 +138,11 @@ def read_ina226_data(ina_solar, ina_system) -> dict:
       - Negative current = charge (DC-DC charger pushing current into battery)
     Grafana or downstream SoC calculations must preserve the sign to compute
     net energy flow (integral of current over time).
+
+    Hardware-level RC low-pass filtering (1kΩ / 10µF) on the analog sensor
+    lines eliminates high-frequency noise at ~16 Hz cutoff, so a lightweight
+    rolling average (e.g. 5 samples) in Grafana is sufficient — the script
+    does not need aggressive software-side spike filtering.
     """
     return {
         "solar_voltage_v":  round(ina_solar.bus_voltage, 4),

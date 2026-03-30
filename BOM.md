@@ -45,7 +45,11 @@ This is the complete parts list required to build the Pi Zero W telemetry system
   * 1x 33kΩ
   * 1x 47kΩ
 * **Pull-up Resistor:** 1x 4.7kΩ (For DS18B20 1-Wire bus).
-* **Decoupling Capacitor:** 1x 0.1µF (104) Ceramic Capacitor.
+* **Decoupling Capacitor:** 1x 0.1µF (104) Ceramic Capacitor (ADS1115 VDD/GND decoupling).
+* **RC Low-Pass Filters (per analog signal line):**
+  * 4x 1kΩ Resistors (1/4 Watt) — one per cell tap line to ADS1115 inputs A0–A3.
+  * 4x 10µF Capacitors (minimum **25V rating**, ceramic or electrolytic). The 25V+ rating is critical because the 4S LiFePO4 pack reaches 14.6V at full charge, which would stress standard 16V capacitors.
+  * 4x 0.1µF (104) Ceramic Capacitors — high-frequency RF decoupling, wired in parallel with the 10µF capacitors.
 * **RFI Chokes (Snap-on):** Mix 31 Snap-on Ferrite Beads (Sized for 5V Pi power line and solar input).
 * **RFI Chokes (Toroid):** 2x Mix 31 Ferrite Toroids for LTC3780 input and output lines. Both positive and negative wires on each side must be wrapped 5–7 turns through the toroid to aggressively filter switching noise before it reaches the Xiegu G90.
 * **Shielding:** Copper foil tape with conductive adhesive.

@@ -101,6 +101,46 @@ Use 1% precision resistors. Build the ladder on a MakerSpot Protoboard HAT.
 * **Cell 3 (10.8V):** To ADS1115 A2 via 33k/10k divider.
 * **Cell 4 (14.4V):** To ADS1115 A3 via 47k/10k divider.
 
+Each divider output passes through an RC low-pass filter before reaching the ADS1115 input pin. See Section 6a below.
+
+---
+
+## 6a. Telemetry RC Low-Pass Filters
+
+All analog signal lines between the resistor ladder and the ADS1115 ADC inputs must be filtered with hardware-level RC low-pass filters. These smooth sensor data and shunt RF noise before it reaches the ADC, eliminating high-frequency interference that would otherwise corrupt voltage readings — especially when the LTC3780 charger or other switching converters are active.
+
+### Filter Topology
+
+```text
+=== TELEMETRY RC LOW-PASS FILTER TOPOLOGY ===
+
+[Battery Cell Tap] or [Shunt Sensor Out]
+         |
+         | (Raw, noisy analog signal)
+         |
+         +-----[ 1kΩ Resistor ]-----+---------> To ADC Input Pin / GPIO
+                                    |
+                                    +---[ 10µF Capacitor ]---+
+                                    |                        |
+                                    +---[ 0.1µF Ceramic ]----+
+                                                             |
+                                                             v
+                                                    [ Telemetry Ground ]
+```
+
+### Wiring Rules
+
+1. **Resistor placement:** The 1kΩ resistor must be wired **in series** with the signal wire, as close to the ADS1115 input pin as physically possible. Solder it directly on the protoboard HAT at the ADC end of the trace, not at the battery tap end.
+2. **Capacitor placement:** The 10µF capacitor must be wired **in parallel**, bridging the ADS1115 input pin directly to the telemetry common ground. Use a **minimum 25V rated** capacitor — the 4S LiFePO4 pack reaches 14.6V at full charge, which would stress standard 16V capacitors.
+3. **RF decoupling:** Wire the 0.1µF ceramic capacitor **in parallel with the 10µF capacitor** (also bridging the ADC input pin to ground). The ceramic cap handles high-frequency RF noise that the larger electrolytic cannot absorb due to its parasitic inductance.
+4. **Repeat for each channel:** Build one RC filter per ADS1115 input (A0–A3), for a total of 4 filters.
+
+### Design Notes
+
+* **Cutoff frequency:** The 1kΩ / 10µF combination yields a -3dB cutoff at approximately **16 Hz** (`f = 1 / (2π × R × C)`). This is well above the 0.1 Hz telemetry sample rate (10-second loop) but aggressively attenuates switching noise from the LTC3780 (~300 kHz) and other RF sources.
+* **The 0.1µF ceramic** in parallel extends high-frequency rejection beyond what the 10µF electrolytic alone provides, creating a two-stage roll-off.
+* **Ground reference:** All filter capacitors must connect to the same telemetry ground node used by the ADS1115 GND pin. Do not use separate ground points, or ground loops will introduce the noise the filter is designed to eliminate.
+
 ---
 
 ## 7. RF-Silent Fan & Thermal Switch Circuit

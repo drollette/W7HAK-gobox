@@ -99,6 +99,27 @@ The ADS1115 cannot safely measure the full pack voltage directly. A resistor lad
 
 See `/wiring_diagrams/ads1115_resistor_ladder_schematic.svg` for the full schematic.
 
+### Analog Signal Filtering
+
+Each resistor ladder output passes through a hardware RC low-pass filter before reaching the ADS1115 ADC input. This eliminates switching noise from the LTC3780 charger and other RF sources at the hardware level, producing clean readings without aggressive software filtering.
+
+```text
+[Battery Cell Tap] or [Shunt Sensor Out]
+         |
+         | (Raw, noisy analog signal)
+         |
+         +-----[ 1kΩ Resistor ]-----+---------> To ADC Input Pin / GPIO
+                                    |
+                                    +---[ 10µF Capacitor ]---+
+                                    |                        |
+                                    +---[ 0.1µF Ceramic ]----+
+                                                             |
+                                                             v
+                                                    [ Telemetry Ground ]
+```
+
+The 1kΩ / 10µF filter provides a -3dB cutoff at ~16 Hz — well above the 0.1 Hz sample rate but far below the LTC3780 switching frequency (~300 kHz). The parallel 0.1µF ceramic capacitor extends high-frequency rejection. All capacitors must be rated **25V minimum** (the pack reaches 14.6V at full charge). See [wiring_diagrams/WIRING_GUIDE.md](wiring_diagrams/WIRING_GUIDE.md) Section 6a for detailed construction instructions.
+
 ### Wiring & Schematics
 
 Complete pin-by-pin wiring instructions — including the 12V fuse block topology, custom USB-C bulkhead wiring, and RFI mitigation techniques — can be found in [wiring_diagrams/WIRING_GUIDE.md](wiring_diagrams/WIRING_GUIDE.md).
