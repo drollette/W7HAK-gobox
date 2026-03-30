@@ -60,6 +60,11 @@ def read_ds18b20_temps() -> dict:
     """
     Read all DS18B20 sensors found in the 1-Wire sysfs tree.
     Returns a dict keyed by sensor ID with temperature in Celsius.
+
+    Note: The enclosure contains a hardware thermal switch (~45 °C normally-open)
+    wired in series with an RF-silent fan on the DC fuse block.  When DS18B20
+    ambient readings approach 45 °C the fan should be observed activating
+    independently — no software action is required.
     """
     temps = {}
     sensor_dirs = glob.glob(f"{W1_BASE}/28-*/w1_slave")
