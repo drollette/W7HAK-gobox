@@ -153,8 +153,9 @@ The script will walk you through two steps:
 You will need a calibrated digital multimeter (DMM).
 
 1. Set your DMM to **DC Voltage (VDC)**, typically the 20V range.
-2. For each of the 4 cells, measure the voltage directly across the cell terminals (positive to negative).
-3. Enter each reading when prompted. LiFePO4 cells should read between **2.50V and 3.65V**.
+2. Connect the **BLACK (negative) probe to the battery's main negative terminal** (Pack -). Leave it there for all four measurements.
+3. Move the **RED (positive) probe** to each successive BMS cell tap, from Cell 1 through Cell 4 (Pack +), entering each cumulative stack voltage when prompted.
+4. Readings should increase with each tap — roughly 3.3V, 6.6V, 9.9V, and 13.2V for a healthy 4S LiFePO4 pack.
 
 The script reads the current ADS1115 tap voltages and computes corrected `CELL_MULTIPLIERS` using:
 
