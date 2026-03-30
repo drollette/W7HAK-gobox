@@ -25,6 +25,10 @@ This is the complete parts list required to build the Pi Zero W telemetry system
 * **DC Fuse Block:** 12V Marine-grade Blade Fuse Block with negative bus (minimum 4 circuits).
 * **Blade Fuses (ATC/ATO):** 1x 10A (G90), 1x 3A (buck converter), 2x 1A (fan circuit, telemetry sensors).
 * **Step-Down Converter:** 12V to 5V Buck Converter (Minimum 3A output).
+* **DC Charge Controller:** LTC3780 10A DC-DC Buck-Boost Converter, adjustable output, physically calibrated to 14.6V CV / 5A CC (4S LiFePO4 profile). Accepts 10–30V input.
+* **LTC3780 Enclosure:** Custom 3D-printed protective case (ABS, Bambu Lab printer). Line interior with copper foil tape to form a Faraday cage for RFI suppression.
+* **Charger Input Fuse:** 15A Inline ATC/ATO blade fuse holder (on charger positive input lead).
+* **Charger Output Fuse:** 15A Inline ATC/ATO blade fuse holder (on charger positive output lead).
 * **Wire:** 10 AWG silicone wire (Main power runs), 22 AWG solid-core wire (Telemetry).
 
 ## 4. Thermal Management
@@ -41,11 +45,20 @@ This is the complete parts list required to build the Pi Zero W telemetry system
   * 1x 33kΩ
   * 1x 47kΩ
 * **Pull-up Resistor:** 1x 4.7kΩ (For DS18B20 1-Wire bus).
-* **Decoupling Capacitor:** 1x 0.1µF (104) Ceramic Capacitor.
-* **RFI Chokes:** Mix 31 Snap-on Ferrite Beads (Sized for 5V Pi power line and solar input).
+* **Decoupling Capacitor:** 1x 0.1µF (104) Ceramic Capacitor (ADS1115 VDD/GND decoupling).
+* **RC Low-Pass Filters (per analog signal line):**
+  * 4x 1kΩ Resistors (1/4 Watt) — one per cell tap line to ADS1115 inputs A0–A3.
+  * 4x 10µF Capacitors (minimum **25V rating**, ceramic or electrolytic). The 25V+ rating is critical because the 4S LiFePO4 pack reaches 14.6V at full charge, which would stress standard 16V capacitors.
+  * 4x 0.1µF (104) Ceramic Capacitors — high-frequency RF decoupling, wired in parallel with the 10µF capacitors.
+* **LTC3780 Output LC Filter:**
+  * 1x 1000µF Electrolytic Capacitor (minimum **25V rating**). Differential noise filter soldered across LTC3780 OUT terminals.
+  * 1x 0.1µF (104) Ceramic Capacitor. High-frequency bypass soldered in parallel with the 1000µF cap across LTC3780 OUT terminals.
+  * 2–3x Small Solid Ferrite Beads (approx. 1cm inner diameter). Common-mode choke — both positive and negative output wires pass through together. Use multiple beads back-to-back if a single bead is too tight for the wire pair.
+* **RFI Chokes (Snap-on):** Mix 31 Snap-on Ferrite Beads (Sized for 5V Pi power line and solar input).
 * **Shielding:** Copper foil tape with conductive adhesive.
 
 ## 6. Panel Connectors
 
 * **Gadget Mode Data:** USB-C Panel Mount / Bulkhead Connector (with breakout pads for D+/D-).
+* **DC Charge Input:** Anderson PowerPole panel mount connector pair (30A-rated contacts) for external DC charging.
 * **Power Outputs:** Anderson PowerPole panel mounts and/or 12V Marine "Cigarette" sockets.
