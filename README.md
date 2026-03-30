@@ -27,17 +27,22 @@ All system power flows from the battery through a single monitored path before r
                                        |
                                   [15A Fuse]
                                        |
-                      (Mix 31 Ferrite Choke on Input Wires)
-                                       |
                 +---------------------------------------------+
                 |     LTC3780 10A Buck-Boost Converter        |
                 |   (Tuned to 14.6V CV / 5A CC via Pots)      |
-                |         [Shielded 3D Printed Case]          |
                 +---------------------------------------------+
                            |                       |
                      (Positive Out)          (Negative Out)
                            |                       |
-                      (Mix 31 Ferrite Choke on Output Wires)
+                           +-------[ 1000µF ]------+  <-- (Differential Noise Filter)
+                           |                       |
+                           +-------[ 0.1µF  ]------+  <-- (High-Freq Bypass)
+                           |                       |
+                           |                       |
+                        ===============================
+                       ||  Solid Ferrite Bead(s)      ||  <-- (Common-Mode Filter)
+                       || (Both wires pass through!)  ||
+                        ===============================
                            |                       |
                        [15A Fuse]                  |
                            |                       |
@@ -64,13 +69,16 @@ All loads **must** be individually fused on this block. See [wiring_diagrams/WIR
 
 ### Universal DC Charging
 
-The system accepts a wide range of DC inputs (10–30V) via an external **Anderson Powerpole** connection on the enclosure panel. This input is routed through a **15A inline fuse** and **Mix 31 ferrite toroids** (input lines wrapped 5–7 turns) to an **LTC3780 10A Buck-Boost Converter** physically calibrated to a **14.6V CV / 5A CC** LiFePO4 charging profile.
+The system accepts a wide range of DC inputs (10–30V) via an external **Anderson Powerpole** connection on the enclosure panel. This input is routed through a **15A inline fuse** to an **LTC3780 10A Buck-Boost Converter** physically calibrated to a **14.6V CV / 5A CC** LiFePO4 charging profile.
 
 Key design points:
 
-- The LTC3780 **positive output** passes through a second **15A inline fuse** and **Mix 31 ferrite toroids** (output lines wrapped 5–7 turns) before connecting to the main positive bus (battery side of the 25A main fuse).
-- The LTC3780 **negative output** connects to the **system/load side of the main current shunt** — not directly to the battery terminal. This ensures the System INA226 sees bidirectional current (positive = discharge, negative = charge), enabling the telemetry system to track charge current.
-- The LTC3780 is housed in a **3D-printed protective enclosure** lined with **copper foil tape** on the inside surfaces to form a Faraday cage, suppressing broadband switching noise before it reaches the Xiegu G90.
+- The LTC3780 output is filtered by a **high-current LC Pi-Filter** that eliminates both differential and common-mode RF switching noise before it reaches the Xiegu G90:
+  - **Stage 1 (Differential):** A 1000µF electrolytic capacitor and 0.1µF ceramic capacitor are soldered in parallel directly across the LTC3780 OUT terminals, absorbing voltage ripple and high-frequency spikes.
+  - **Stage 2 (Common-Mode):** Both positive and negative output wires pass together through solid ferrite bead(s), suppressing common-mode noise that would otherwise radiate from the cable runs.
+- The filtered **positive output** passes through a **15A inline fuse** before connecting to the main positive bus (battery side of the 25A main fuse).
+- The filtered **negative output** connects to the **system/load side of the main current shunt** — not directly to the battery terminal. This ensures the System INA226 sees bidirectional current (positive = discharge, negative = charge), enabling the telemetry system to track charge current.
+- The LTC3780 is housed in a **3D-printed protective enclosure** lined with **copper foil tape** on the inside surfaces to form a Faraday cage, suppressing radiated emissions.
 
 **The negative output of the LTC3780 must pass through the main shunt. Do not wire it directly to the battery's negative terminal, or the telemetry script will not register the incoming charging current.**
 
