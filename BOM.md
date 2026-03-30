@@ -21,12 +21,19 @@ This is the complete parts list required to build the Pi Zero W telemetry system
 
 * **Battery Cells:** 12x 33140-format LiFePO4 cells (Configured as 4S3P for ~45Ah).
 * **BMS:** Daly 4S 12V 60A LiFePO4 Battery Protection Board (Hardware/Common Port version).
-* **Main Fuse:** 30A Inline ATC/ATO blade fuse holder.
-* **Distribution Block:** 12V Marine-grade Blade Fuse Block with negative bus.
+* **Main Fuse:** 25A Inline ATC/ATO blade fuse holder (between main current shunt and DC fuse block).
+* **DC Fuse Block:** 12V Marine-grade Blade Fuse Block with negative bus (minimum 4 circuits).
+* **Blade Fuses (ATC/ATO):** 1x 10A (G90), 1x 3A (buck converter), 2x 1A (fan circuit, telemetry sensors).
 * **Step-Down Converter:** 12V to 5V Buck Converter (Minimum 3A output).
 * **Wire:** 10 AWG silicone wire (Main power runs), 22 AWG solid-core wire (Telemetry).
 
-## 4. Passive Components & RFI Mitigation
+## 4. Thermal Management
+
+* **Cooling Fan:** RF-silent 12V DC brushless fan (sized for enclosure; typical draw < 0.3A).
+* **Thermal Switch:** Normally-open (NO) bimetallic thermal switch, ~45 °C activation (KSD9700 series or equivalent, rated for 12V DC).
+* **Note:** The thermal switch is wired in series with the fan on a dedicated 1A fused circuit. No GPIO or software control is used — the switch engages automatically at ambient temperature threshold.
+
+## 5. Passive Components & RFI Mitigation
 
 * **Resistor Ladder (1% Precision Metal Film):**
   * 4x 10kΩ
@@ -38,7 +45,7 @@ This is the complete parts list required to build the Pi Zero W telemetry system
 * **RFI Chokes:** Mix 31 Snap-on Ferrite Beads (Sized for 5V Pi power line and solar input).
 * **Shielding:** Copper foil tape with conductive adhesive.
 
-## 5. Panel Connectors
+## 6. Panel Connectors
 
 * **Gadget Mode Data:** USB-C Panel Mount / Bulkhead Connector (with breakout pads for D+/D-).
 * **Power Outputs:** Anderson PowerPole panel mounts and/or 12V Marine "Cigarette" sockets.

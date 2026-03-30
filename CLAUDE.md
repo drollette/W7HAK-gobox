@@ -52,6 +52,8 @@ The setup script patches `ExecStart` in the service file to match the actual clo
 - **DS18B20** is read via raw sysfs (`/sys/bus/w1/devices/28-*/w1_slave`) rather than a library to minimize dependencies.
 - **INA226 sensors** — two units on the I2C bus: `0x40` (Solar input) and `0x41` (System load). Raw current readings from both are multiplied by `CORRECTION_FACTOR = 1.025` in software to compensate for shunt resistor tolerances. Do not remove this factor without re-measuring against a calibrated reference.
 - **USB gadget mode** — Pi static IP is `192.168.7.2` on `usb0`. Grafana on port 3000, InfluxDB on port 8086.
+- **DC fuse block** — all loads are individually fused: G90 (10A), buck converter (3A), fan circuit (1A), telemetry sensors (1A). A 25A main inline fuse protects the trunk feed from the BMS/shunt to the fuse block.
+- **RF-silent fan** — 12V DC brushless fan controlled by a normally-open ~45 °C thermal switch in series, on a dedicated 1A fused circuit. No GPIO or software control; the switch is a passive hardware failsafe that avoids RF switching noise on HF.
 
 ## 3D Models
 

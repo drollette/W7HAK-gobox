@@ -11,8 +11,38 @@ A field-deployable amateur radio go box (callsign **W7HAK**) with real-time batt
 | Raspberry Pi Zero W | Single-board computer running telemetry daemon, InfluxDB, and Grafana |
 | 4S3P 45 Ah LiFePO4 pack | Primary power (nominal 12.8 V, 576 Wh) using 33140-format cells |
 | ADS1115 (I2C 0x48) | 16-bit ADC reading four cell-tap voltages via resistor ladder |
-| INA226 (I2C) | High-side current/power monitor for pack-level current and wattage |
+| 2x INA226 (I2C 0x40, 0x41) | High-side current/power monitors for solar input and system load |
 | DS18B20 (GPIO 4, 1-Wire) | Ambient and cell temperature sensors |
+| DC Fuse Block (marine-grade) | Central power distribution with individually fused load circuits |
+| RF-silent 12V DC fan | Enclosure cooling, activated by hardware thermal switch |
+| Normally-open thermal switch | Ambient temperature failsafe — engages fan at ~45 °C without GPIO control |
+
+### Power Distribution
+
+All system power flows from the battery through a single monitored path before reaching the fuse block:
+
+```
+4S LiFePO4 Pack → BMS → Main Current Shunt → 25A Main Inline Fuse → DC Fuse Block
+```
+
+The DC fuse block distributes power to all loads via individually fused circuits:
+
+| Circuit | Fuse | Notes |
+|---|---|---|
+| Xiegu G90 Transceiver | 10A blade | ~8A peak at 20W transmit |
+| Raspberry Pi (12V-to-5V buck converter) | 3A blade | Protects 12V input side of converter |
+| RF-silent fan + thermal switch | 1A blade | Fan draws < 0.3A; thermal switch in series |
+| Telemetry sensors / microcontrollers | 1A blade | ADS1115, INA226, DS18B20 circuits |
+
+All loads **must** be individually fused on this block. See [wiring_diagrams/WIRING_GUIDE.md](wiring_diagrams/WIRING_GUIDE.md) for complete routing details.
+
+### Thermal Management — RF-Silent Fan & Thermal Switch
+
+An RF-silent 12V DC fan provides enclosure cooling. The fan is controlled entirely in hardware by a **normally-open (NO) thermal switch** wired in series on a dedicated 1A fused circuit from the DC fuse block. When the ambient enclosure temperature reaches approximately **45 °C**, the thermal switch closes and the fan runs.
+
+This design is intentional: the thermal switch acts as an automatic hardware-level failsafe that does **not** require Raspberry Pi GPIO control or any software switching logic. This keeps RF noise from PWM or digital switching to an absolute minimum — critical for a ham radio go box operating on HF.
+
+The DS18B20 ambient temperature sensor (read by `telemetry.py`) monitors the same enclosure environment. When telemetry readings approach 45 °C, the fan should be observed activating independently via the thermal switch.
 
 ### Bill of Materials
 
