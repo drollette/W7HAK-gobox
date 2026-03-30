@@ -31,35 +31,73 @@ The ADS1115 cannot safely measure the full pack voltage directly. A resistor lad
 
 See `/wiring_diagrams/ads1115_resistor_ladder_schematic.svg` for the full schematic.
 
-### Calibrating the Resistor Ladder
+### Calibration
 
-Because 1% tolerance resistors still vary slightly, the default multipliers in `telemetry.py` will likely need to be tuned to your specific hardware to get pinpoint accuracy.
+Because 1% tolerance resistors and shunt components still vary slightly, the default multipliers and correction factor in `telemetry.py` will likely need to be tuned to your specific hardware to get pinpoint accuracy.
 
-**Step 1: Measure the True Stack Voltages**
+#### When to Calibrate
 
-Using a calibrated digital multimeter, measure the DC voltage from the main battery ground (Pack -) to each individual cell tap on your balance lead. Write these four numbers down.
+- After initial assembly, before first deployment
+- After replacing any resistors in the voltage divider ladder
+- After replacing the INA226 shunt resistor
+- If Grafana cell voltage readings drift from multimeter measurements
 
-- *Example:* Tap 1 might be 3.32 V, Tap 2 might be 6.65 V, Tap 3 might be 9.98 V, and Tap 4 (Total Pack) might be 13.31 V.
+#### Running the Calibration Script
 
-**Step 2: Calculate the Required Adjustment**
+The interactive `calibrate.py` script automates the entire process:
 
-If your Grafana dashboard is showing incorrect values, you need to adjust the `CELL_MULTIPLIERS` dictionary in `scripts/telemetry.py`. Because the script uses subtractive math to isolate individual cell voltages, **you must calibrate the total stack voltage at each tap, not the individual cell voltages.**
+```bash
+cd /home/pi/W7HAK-gobox
+python3 scripts/calibrate.py
+```
 
-Use this formula for each tap:
+The script will walk you through two steps:
+
+**Step 1 — Cell Voltage Calibration**
+
+You will need a calibrated digital multimeter (DMM).
+
+1. Set your DMM to **DC Voltage (VDC)**, typically the 20V range.
+2. For each of the 4 cells, measure the voltage directly across the cell terminals (positive to negative).
+3. Enter each reading when prompted. LiFePO4 cells should read between **2.50V and 3.65V**.
+
+The script reads the current ADS1115 tap voltages and computes corrected `CELL_MULTIPLIERS` using:
+
+```
+New Multiplier = True Stack Voltage / Raw Tap Voltage
+```
+
+**Step 2 — Shunt Resistance Calibration**
+
+1. **Completely disconnect power from the system** before measuring.
+2. Set your DMM to the **lowest Ohms/Resistance setting** (milliohms if available).
+3. Short the leads together and zero the meter.
+4. Measure the resistance directly across the shunt resistor terminals.
+5. Enter the reading in Ohms (e.g., `0.0015` for a 1.5 milliohm shunt).
+
+The script computes a new `CORRECTION_FACTOR` based on the nominal 2 milliohm shunt:
+
+```
+CORRECTION_FACTOR = 0.002 / Measured Resistance
+```
+
+**Step 3 — Apply Changes**
+
+The script writes the updated `CELL_MULTIPLIERS` and `CORRECTION_FACTOR` directly to `scripts/telemetry.py`. Restart the service to apply:
+
+```bash
+sudo systemctl restart gobox_telemetry
+```
+
+#### Manual Calibration
+
+If you prefer to calibrate manually, measure the DC voltage from battery ground (Pack -) to each cell tap, then calculate:
 
 ```
 New Multiplier = Current Multiplier × (True Voltmeter Voltage ÷ Calculated Stack Voltage)
 ```
 
-*Note: You can find the "Calculated Stack Voltage" by either temporarily adding `print(stack)` to your `telemetry.py` script, or by manually adding up the individual cell voltages displayed in Grafana (e.g., Dashboard Cell 1 + Cell 2 = Tap 2 Stack Voltage).*
-
-**Step 3: Update and Restart**
-
-Edit `scripts/telemetry.py` and replace the default `CELL_MULTIPLIERS` with your newly calculated ones. Save the file and restart the service:
-
-```bash
-sudo systemctl restart gobox_telemetry
-```
+Edit `CELL_MULTIPLIERS` in `scripts/telemetry.py` and restart the service.
 
 ### Wiring & Schematics
 
@@ -164,6 +202,7 @@ goBox/
 ├── wiring_diagrams/    # Schematics (resistor ladder, INA226 hookup)
 ├── scripts/
 │   ├── telemetry.py    # Main telemetry daemon
+│   ├── calibrate.py    # Interactive calibration utility
 │   └── setup_pi.sh     # One-shot provisioning script
 └── systemd/
     └── gobox_telemetry.service   # systemd unit file
