@@ -18,14 +18,16 @@ The Main Current Shunt sits on the negative rail between the BMS output and the 
 ### Charging Path (DC Input)
 
 ```
-External Anderson Powerpole Input → [Optional 15A Inline Fuse] → DC-DC Buck-Boost Charger Input
-Charger Output (+) → Main Positive Bus (battery side of 25A main fuse)
-Charger Output (-) → System/Load side of Main Current Shunt
+External Anderson Powerpole (+) → 15A Input Fuse → Mix 31 Toroid (5-7 turns) → LTC3780 IN (+)
+External Anderson Powerpole (-) → Mix 31 Toroid (5-7 turns) → LTC3780 IN (-)
+
+LTC3780 OUT (+) → Mix 31 Toroid (5-7 turns) → 15A Output Fuse → Main Positive Bus
+LTC3780 OUT (-) → Mix 31 Toroid (5-7 turns) → System/Load side of Main Current Shunt
 ```
 
-**Do NOT wire the charger negative directly to the battery terminal. It must pass through the shunt so the telemetry system can measure the incoming charge current.**
+**The negative output of the LTC3780 must pass through the main shunt. Do not wire it directly to the battery's negative terminal, or the telemetry script will not register the incoming charging current.**
 
-The DC-DC Buck-Boost Charge Controller is configured for **14.6V CC/CV** (4S LiFePO4 profile). It accepts a wide range of DC inputs (10–30V) from automotive chargers, vehicle accessory ports, or generic power supplies.
+The LTC3780 10A Buck-Boost Converter is physically calibrated to **14.6V CV / 5A CC** (4S LiFePO4 profile) using its onboard potentiometers. It accepts 10–30V DC input from automotive chargers, vehicle accessory ports, or generic power supplies. See the Charging Calibration section in the README for the calibration procedure.
 
 ### Fuse Block Circuit Assignments
 
@@ -132,32 +134,34 @@ Fan (-) ──→ DC Fuse Block Negative (-) Bus
 
 ---
 
-## 8. Universal DC Charging Circuit
+## 8. Universal DC Charging Circuit (LTC3780)
 
-A DC-DC Buck-Boost Charge Controller allows the battery to be charged from any unconditioned DC source via an external Anderson Powerpole connector on the enclosure panel.
+The LTC3780 10A Buck-Boost Converter allows the battery to be charged from any unconditioned DC source (10–30V) via an external Anderson Powerpole connector on the enclosure panel.
 
 ### Circuit Wiring
 
 ```
-Panel Anderson Powerpole (+) ──→ [Optional 15A Inline Fuse] ──→ Charger Input (+)
-Panel Anderson Powerpole (-) ──→ Charger Input (-)
+Panel Anderson Powerpole (+) ──→ [15A Input Fuse] ──→ Mix 31 Toroid ──→ LTC3780 IN (+)
+Panel Anderson Powerpole (-) ──────────────────────→ Mix 31 Toroid ──→ LTC3780 IN (-)
 
-Charger Output (+) ──→ Main Positive Bus (battery side of 25A main fuse)
-Charger Output (-) ──→ System/Load side of Main Current Shunt
+LTC3780 OUT (+) ──→ Mix 31 Toroid ──→ [15A Output Fuse] ──→ Main Positive Bus
+LTC3780 OUT (-) ──→ Mix 31 Toroid ──→ System/Load side of Main Current Shunt
 ```
 
-**Do NOT wire the charger negative directly to the battery terminal. It must connect to the system/load side of the main current shunt so the INA226 can measure incoming charge current.**
+**The negative output of the LTC3780 must pass through the main shunt. Do not wire it directly to the battery's negative terminal, or the telemetry script will not register the incoming charging current.**
 
 ### Component Details
 
-* **Charge Controller:** DC-DC Buck-Boost module configured for **14.6V CC/CV** output (4S LiFePO4 charging profile). Must accept 10–30V input range to support automotive 12V, vehicle accessory 13.8V, and bench supply sources.
-* **Input Fuse:** Optional 15A inline ATC/ATO fuse on the positive input lead. Protects the external source and wiring from a charger fault.
+* **Charge Controller:** LTC3780 10A DC-DC Buck-Boost Converter, physically calibrated to **14.6V CV / 5A CC** via onboard potentiometers (see Charging Calibration in README). Accepts 10–30V input to support automotive 12V, vehicle accessory 13.8V, and bench supply sources.
+* **Input Fuse:** 15A inline ATC/ATO fuse on the positive input lead. Protects the external source and wiring from a charger fault.
+* **Output Fuse:** 15A inline ATC/ATO fuse on the positive output lead. Protects the battery and wiring from overcurrent.
 * **Panel Connector:** Anderson Powerpole connector pair mounted on the enclosure panel. Use 30A-rated contacts with 10 AWG wire for the input run.
 
-### RFI Considerations
+### RFI Mitigation (Critical)
 
-The charge controller is a switching converter and **must** be shielded or inherently RF-quiet to prevent broadband interference on HF:
+The LTC3780 is a high-frequency switching converter and **will** radiate broadband noise across HF without proper filtering and shielding:
 
-* Wrap the module in **grounded copper foil tape** (same technique used for the buck converter).
-* Add **Mix 31 ferrite beads** on both input and output leads.
-* If interference persists during charging, disconnect the charger while operating the Xiegu G90 on receive-sensitive modes (FT8, CW, SSB).
+1. **Faraday cage enclosure:** House the bare LTC3780 PCB in a 3D-printed ABS enclosure (Bambu Lab printer). Line the interior with **copper foil tape** (conductive adhesive). Ground the copper lining to the system negative bus.
+2. **Ferrite toroids:** Wrap both input wires (positive and negative together) **5–7 turns through a Mix 31 ferrite toroid**. Repeat for both output wires. This aggressively filters common-mode switching noise before it reaches the Xiegu G90 or radiates from the cable runs.
+3. **Ferrite snap-ons:** Add Mix 31 snap-on beads to any remaining exposed leads as close to the LTC3780 as possible.
+4. If interference persists during charging, disconnect the charger while operating the Xiegu G90 on receive-sensitive modes (FT8, CW, SSB).

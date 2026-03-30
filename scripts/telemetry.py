@@ -9,12 +9,12 @@ Hardware:
   - ADS1115 ADC at I2C address 0x48
   - DS18B20 temperature sensor on GPIO 4 (1-Wire)
   - 4S3P LiFePO4 battery pack with resistor ladder voltage dividers
-  - DC-DC Buck-Boost Charge Controller (14.6V CC/CV, external DC input)
+  - LTC3780 10A Buck-Boost Converter (calibrated to 14.6V CV / 5A CC)
 
 Current measurement:
   The main current shunt carries bidirectional current.  Positive values
   indicate discharge (system load), negative values indicate charge
-  (incoming current from the DC-DC charger).  The System INA226 at 0x41
+  (incoming current from the LTC3780 charger).  The System INA226 at 0x41
   reads this shunt; Grafana queries should account for sign when computing
   net State of Charge (SoC) over time.
 

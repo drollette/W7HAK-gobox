@@ -16,50 +16,41 @@ A field-deployable amateur radio go box (callsign **W7HAK**) with real-time batt
 | DC Fuse Block (marine-grade) | Central power distribution with individually fused load circuits |
 | RF-silent 12V DC fan | Enclosure cooling, activated by hardware thermal switch |
 | Normally-open thermal switch | Ambient temperature failsafe — engages fan at ~45 °C without GPIO control |
-| DC-DC Buck-Boost Charge Controller | Accepts wide-range DC input and charges battery at 14.6V CC/CV profile |
+| DC-DC Buck-Boost Charge Controller | LTC3780 10A converter tuned to 14.6V CV / 5A CC LiFePO4 profile |
 
 ### Power Distribution & Charging
 
-All system power flows from the battery through a single monitored path before reaching the fuse block. An external DC-DC Buck-Boost Charge Controller allows charging from any unconditioned DC source (12V automotive charger, vehicle accessory port, generic power supply) via an Anderson Powerpole input connector.
+All system power flows from the battery through a single monitored path before reaching the fuse block. An **LTC3780 10A Buck-Boost Converter** allows charging from any unconditioned DC source (12V automotive charger, vehicle accessory port, generic power supply) via an Anderson Powerpole input connector. The LTC3780 is physically calibrated to a **14.6V CV / 5A CC** LiFePO4 charging profile using its onboard potentiometers (see [Charging Calibration](#charging-calibration) below).
 
 ```text
-                                [External DC Input Port]
-                                           |
-                              [DC-DC Buck-Boost Charger]
-                               (Set to 14.6V CC/CV)
-                                  |             |
-                             (Positive)     (Negative)
-                                  |             |
-                         [4S LiFePO4 Battery Pack]
-                                     |
-                                     v
-                       [Battery Management System (BMS)]
-                                     |
-          +--------------------------+--------------------------+
-          | (Negative)                               (Positive) |
-          v                                                     v
- [Main Current Shunt] <--- (Charger Negative connects here)   [25A Main Fuse]
-          |                                                     |
-          +--------------------------+--------------------------+ <--- (Charger Positive)
-                                     |
-                                     v
+                        [External Universal DC Input Port]
+                                       |
+                                  [15A Fuse]
+                                       |
+                      (Mix 31 Ferrite Choke on Input Wires)
+                                       |
+                +---------------------------------------------+
+                |     LTC3780 10A Buck-Boost Converter        |
+                |   (Tuned to 14.6V CV / 5A CC via Pots)      |
+                |         [Shielded 3D Printed Case]          |
+                +---------------------------------------------+
+                           |                       |
+                     (Positive Out)          (Negative Out)
+                           |                       |
+                      (Mix 31 Ferrite Choke on Output Wires)
+                           |                       |
+                       [15A Fuse]                  |
+                           |                       |
+                           v                       |
+[4S LiFePO4 Battery] -> [BMS] -> [Main Shunt] <----+ (Negative connects here)
+                                       |
+                               [25A Main Fuse]
+                                       |
     =========================================================================
     ||                        12V DC FUSE BLOCK                            ||
-    ||  [ NEGATIVE BUS BAR ]                      [ POSITIVE FUSED BUS ]   ||
     =========================================================================
-          |      |      |      |                    |      |      |      |
-          |      |      |      +------(10A)---------+      |      |      |
-          |      |      |         [Xiegu G90 Radio]        |      |      |
-          |      |      +-------------(3A)-----------------+      |      |
-          |      |           [12V-5V Buck Converter]              |      |
-          |      |                    |                           |      |
-          |      |              [Raspberry Pi]                    |      |
-          |      +--------------------(1A)------------------------+      |
-          |                 [Normally Open Thermal Switch]               |
-          |                               |                              |
-          |                        [RF Silent Fan]                       |
-          +---------------------------(1A)-------------------------------+
-                               [Telemetry Sensors]
+          |              |              |                 |
+     (10A G90)     (3A Buck/Pi)    (1A Fan)         (1A Telemetry)
 ```
 
 | Circuit | Fuse | Notes |
@@ -73,15 +64,15 @@ All loads **must** be individually fused on this block. See [wiring_diagrams/WIR
 
 ### Universal DC Charging
 
-The system accepts a wide range of DC inputs (10–30V) via an external **Anderson Powerpole** connection on the enclosure panel. This input is routed through an optional 15A inline fuse to a **DC-DC Buck-Boost Charge Controller** configured for a **14.6V CC/CV LiFePO4 charging profile**.
+The system accepts a wide range of DC inputs (10–30V) via an external **Anderson Powerpole** connection on the enclosure panel. This input is routed through a **15A inline fuse** and **Mix 31 ferrite toroids** (input lines wrapped 5–7 turns) to an **LTC3780 10A Buck-Boost Converter** physically calibrated to a **14.6V CV / 5A CC** LiFePO4 charging profile.
 
 Key design points:
 
-- The charger **positive output** connects to the main positive bus (battery side of the 25A main fuse).
-- The charger **negative output** connects to the **system/load side of the main current shunt** — not directly to the battery terminal. This ensures the System INA226 sees bidirectional current (positive = discharge, negative = charge), enabling the telemetry system to track charge current.
-- The charge controller must be **shielded or inherently RF-quiet**. Unshielded switching converters can radiate broadband noise across HF, degrading Xiegu G90 receive performance. Wrap the module in grounded copper tape and add ferrite beads on input/output leads if needed.
+- The LTC3780 **positive output** passes through a second **15A inline fuse** and **Mix 31 ferrite toroids** (output lines wrapped 5–7 turns) before connecting to the main positive bus (battery side of the 25A main fuse).
+- The LTC3780 **negative output** connects to the **system/load side of the main current shunt** — not directly to the battery terminal. This ensures the System INA226 sees bidirectional current (positive = discharge, negative = charge), enabling the telemetry system to track charge current.
+- The LTC3780 is housed in a **3D-printed protective enclosure** lined with **copper foil tape** on the inside surfaces to form a Faraday cage, suppressing broadband switching noise before it reaches the Xiegu G90.
 
-**Do NOT wire the charger negative directly to the battery terminal. It must pass through the shunt so the telemetry system can measure the incoming charge current.**
+**The negative output of the LTC3780 must pass through the main shunt. Do not wire it directly to the battery's negative terminal, or the telemetry script will not register the incoming charging current.**
 
 ### Thermal Management — RF-Silent Fan & Thermal Switch
 
@@ -274,6 +265,41 @@ Edit `CELL_MULTIPLIERS` in `scripts/telemetry.py` and restart the service.
 
 ---
 
+## Charging Calibration
+
+The LTC3780 buck-boost converter must be physically calibrated with a multimeter **before the battery is ever connected to the output**. This sets the constant-voltage (CV) ceiling and constant-current (CC) limit for a safe 4S LiFePO4 charge profile.
+
+You will need:
+- A 12V DC power source (bench supply, automotive battery, or wall adapter)
+- A digital multimeter (DMM) with a **10A DC current range**
+- A small flathead or Phillips screwdriver for the trimpots
+
+### Step 1: Constant Voltage (CV) Tuning
+
+1. **Do not connect the battery to the LTC3780 output.**
+2. Connect a 12V power source to the LTC3780 **IN** terminals (observe polarity).
+3. Set the multimeter to **DC Voltage** and connect the probes to the LTC3780 **OUT** terminals.
+4. Slowly turn the **CV potentiometer** with a small screwdriver until the multimeter reads exactly **14.6V**.
+5. This sets the voltage ceiling for 4S LiFePO4 (3.65V per cell).
+
+### Step 2: Constant Current (CC) Tuning
+
+1. Disconnect the multimeter from voltage mode.
+2. Turn the **CC potentiometer counter-clockwise approximately 20 turns** to lower the current limit to its minimum.
+3. Switch the multimeter to the **10A DC Current** setting and move the red probe to the **10A jack** on the meter.
+4. Touch the multimeter probes directly to the LTC3780 **OUT** terminals (this creates a short circuit through the meter's internal shunt — this is safe because the CC limit is set to minimum).
+5. Slowly turn the **CC potentiometer clockwise** until the multimeter reads exactly **5.00A**.
+6. This limits the charge current to 5A, preventing overload on small external power supplies and keeping the charge rate within safe bounds for the battery pack.
+
+### Step 3: Verify and Install
+
+1. Disconnect the 12V source.
+2. Reconfigure the multimeter back to standard DC Voltage mode.
+3. The LTC3780 is now locked to a **14.6V / 5A** LiFePO4 CC/CV charging profile.
+4. Install the module in its shielded 3D-printed enclosure and connect per the [Wiring Guide](wiring_diagrams/WIRING_GUIDE.md).
+
+---
+
 ## Repository Layout
 
 ```
@@ -292,12 +318,14 @@ goBox/
 
 ## 3D Models
 
-The files in `/3d_models` are STEP files designed for **ABS filament** and a compression-frame battery assembly. They are specifically engineered for the dimensional tolerances of ABS (higher thermal stability, post-process acetone smoothing). Do not substitute PLA or PETG without re-evaluating clearances and structural load paths.
+The files in `/3d_models` are STEP files designed for **ABS filament** and printed on a Bambu Lab printer. They are specifically engineered for the dimensional tolerances of ABS (higher thermal stability, post-process acetone smoothing). Do not substitute PLA or PETG without re-evaluating clearances and structural load paths.
 
 | File | Description |
 |---|---|
 | `33140_3S_4P_CENTER.step` | Center compression frame for 3P cell group |
 | `33140_3S_4P_END_CAP.step` | End cap for the 4S3P pack assembly |
+
+A custom protective enclosure for the bare LTC3780 PCB should be 3D printed on the Bambu Lab printer in ABS. **Line the inside of the enclosure with copper foil tape** (with conductive adhesive) to form a Faraday cage that suppresses switching noise before it radiates into the HF environment. Ground the copper lining to the system negative bus.
 
 ---
 

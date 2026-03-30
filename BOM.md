@@ -25,8 +25,10 @@ This is the complete parts list required to build the Pi Zero W telemetry system
 * **DC Fuse Block:** 12V Marine-grade Blade Fuse Block with negative bus (minimum 4 circuits).
 * **Blade Fuses (ATC/ATO):** 1x 10A (G90), 1x 3A (buck converter), 2x 1A (fan circuit, telemetry sensors).
 * **Step-Down Converter:** 12V to 5V Buck Converter (Minimum 3A output).
-* **DC Charge Controller:** DC-DC Buck-Boost module, adjustable output, configured for 14.6V CC/CV (4S LiFePO4 profile). Must accept 10–30V input.
-* **Charger Input Fuse:** 15A Inline ATC/ATO blade fuse holder (optional, on charger positive input lead).
+* **DC Charge Controller:** LTC3780 10A DC-DC Buck-Boost Converter, adjustable output, physically calibrated to 14.6V CV / 5A CC (4S LiFePO4 profile). Accepts 10–30V input.
+* **LTC3780 Enclosure:** Custom 3D-printed protective case (ABS, Bambu Lab printer). Line interior with copper foil tape to form a Faraday cage for RFI suppression.
+* **Charger Input Fuse:** 15A Inline ATC/ATO blade fuse holder (on charger positive input lead).
+* **Charger Output Fuse:** 15A Inline ATC/ATO blade fuse holder (on charger positive output lead).
 * **Wire:** 10 AWG silicone wire (Main power runs), 22 AWG solid-core wire (Telemetry).
 
 ## 4. Thermal Management
@@ -44,7 +46,8 @@ This is the complete parts list required to build the Pi Zero W telemetry system
   * 1x 47kΩ
 * **Pull-up Resistor:** 1x 4.7kΩ (For DS18B20 1-Wire bus).
 * **Decoupling Capacitor:** 1x 0.1µF (104) Ceramic Capacitor.
-* **RFI Chokes:** Mix 31 Snap-on Ferrite Beads (Sized for 5V Pi power line and solar input).
+* **RFI Chokes (Snap-on):** Mix 31 Snap-on Ferrite Beads (Sized for 5V Pi power line and solar input).
+* **RFI Chokes (Toroid):** 2x Mix 31 Ferrite Toroids for LTC3780 input and output lines. Both positive and negative wires on each side must be wrapped 5–7 turns through the toroid to aggressively filter switching noise before it reaches the Xiegu G90.
 * **Shielding:** Copper foil tape with conductive adhesive.
 
 ## 6. Panel Connectors
