@@ -16,16 +16,51 @@ A field-deployable amateur radio go box (callsign **W7HAK**) with real-time batt
 | DC Fuse Block (marine-grade) | Central power distribution with individually fused load circuits |
 | RF-silent 12V DC fan | Enclosure cooling, activated by hardware thermal switch |
 | Normally-open thermal switch | Ambient temperature failsafe — engages fan at ~45 °C without GPIO control |
+| DC-DC Buck-Boost Charge Controller | Accepts wide-range DC input and charges battery at 14.6V CC/CV profile |
 
-### Power Distribution
+### Power Distribution & Charging
 
-All system power flows from the battery through a single monitored path before reaching the fuse block:
+All system power flows from the battery through a single monitored path before reaching the fuse block. An external DC-DC Buck-Boost Charge Controller allows charging from any unconditioned DC source (12V automotive charger, vehicle accessory port, generic power supply) via an Anderson Powerpole input connector.
 
+```text
+                                [External DC Input Port]
+                                           |
+                              [DC-DC Buck-Boost Charger]
+                               (Set to 14.6V CC/CV)
+                                  |             |
+                             (Positive)     (Negative)
+                                  |             |
+                         [4S LiFePO4 Battery Pack]
+                                     |
+                                     v
+                       [Battery Management System (BMS)]
+                                     |
+          +--------------------------+--------------------------+
+          | (Negative)                               (Positive) |
+          v                                                     v
+ [Main Current Shunt] <--- (Charger Negative connects here)   [25A Main Fuse]
+          |                                                     |
+          +--------------------------+--------------------------+ <--- (Charger Positive)
+                                     |
+                                     v
+    =========================================================================
+    ||                        12V DC FUSE BLOCK                            ||
+    ||  [ NEGATIVE BUS BAR ]                      [ POSITIVE FUSED BUS ]   ||
+    =========================================================================
+          |      |      |      |                    |      |      |      |
+          |      |      |      +------(10A)---------+      |      |      |
+          |      |      |         [Xiegu G90 Radio]        |      |      |
+          |      |      +-------------(3A)-----------------+      |      |
+          |      |           [12V-5V Buck Converter]              |      |
+          |      |                    |                           |      |
+          |      |              [Raspberry Pi]                    |      |
+          |      +--------------------(1A)------------------------+      |
+          |                 [Normally Open Thermal Switch]               |
+          |                               |                              |
+          |                        [RF Silent Fan]                       |
+          +---------------------------(1A)-------------------------------+
+                               [Telemetry Sensors]
 ```
-4S LiFePO4 Pack → BMS → Main Current Shunt → 25A Main Inline Fuse → DC Fuse Block
-```
-
-The DC fuse block distributes power to all loads via individually fused circuits:
 
 | Circuit | Fuse | Notes |
 |---|---|---|
@@ -35,6 +70,18 @@ The DC fuse block distributes power to all loads via individually fused circuits
 | Telemetry sensors / microcontrollers | 1A blade | ADS1115, INA226, DS18B20 circuits |
 
 All loads **must** be individually fused on this block. See [wiring_diagrams/WIRING_GUIDE.md](wiring_diagrams/WIRING_GUIDE.md) for complete routing details.
+
+### Universal DC Charging
+
+The system accepts a wide range of DC inputs (10–30V) via an external **Anderson Powerpole** connection on the enclosure panel. This input is routed through an optional 15A inline fuse to a **DC-DC Buck-Boost Charge Controller** configured for a **14.6V CC/CV LiFePO4 charging profile**.
+
+Key design points:
+
+- The charger **positive output** connects to the main positive bus (battery side of the 25A main fuse).
+- The charger **negative output** connects to the **system/load side of the main current shunt** — not directly to the battery terminal. This ensures the System INA226 sees bidirectional current (positive = discharge, negative = charge), enabling the telemetry system to track charge current.
+- The charge controller must be **shielded or inherently RF-quiet**. Unshielded switching converters can radiate broadband noise across HF, degrading Xiegu G90 receive performance. Wrap the module in grounded copper tape and add ferrite beads on input/output leads if needed.
+
+**Do NOT wire the charger negative directly to the battery terminal. It must pass through the shunt so the telemetry system can measure the incoming charge current.**
 
 ### Thermal Management — RF-Silent Fan & Thermal Switch
 

@@ -9,6 +9,14 @@ Hardware:
   - ADS1115 ADC at I2C address 0x48
   - DS18B20 temperature sensor on GPIO 4 (1-Wire)
   - 4S3P LiFePO4 battery pack with resistor ladder voltage dividers
+  - DC-DC Buck-Boost Charge Controller (14.6V CC/CV, external DC input)
+
+Current measurement:
+  The main current shunt carries bidirectional current.  Positive values
+  indicate discharge (system load), negative values indicate charge
+  (incoming current from the DC-DC charger).  The System INA226 at 0x41
+  reads this shunt; Grafana queries should account for sign when computing
+  net State of Charge (SoC) over time.
 
 Resistor ladder multipliers (to recover actual cell stack voltages from divider output):
   Cell 1 (bottom): 2.0
@@ -116,12 +124,19 @@ def read_ina226_data(ina_solar, ina_system) -> dict:
     """
     Read bus voltage, corrected current, and power from both INA226 sensors.
     Current is multiplied by CORRECTION_FACTOR to account for shunt resistor tolerances.
+
+    The system INA226 reads bidirectional current through the main shunt:
+      - Positive current = discharge (system loads drawing from battery)
+      - Negative current = charge (DC-DC charger pushing current into battery)
+    Grafana or downstream SoC calculations must preserve the sign to compute
+    net energy flow (integral of current over time).
     """
     return {
         "solar_voltage_v":  round(ina_solar.bus_voltage, 4),
         "solar_current_a":  round(ina_solar.current * CORRECTION_FACTOR, 4),
         "solar_power_w":    round(ina_solar.power, 4),
         "system_voltage_v": round(ina_system.bus_voltage, 4),
+        # system_current_a can be negative when the DC-DC charger is active
         "system_current_a": round(ina_system.current * CORRECTION_FACTOR, 4),
         "system_power_w":   round(ina_system.power, 4),
     }

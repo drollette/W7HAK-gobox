@@ -4,16 +4,28 @@
 
 All system power originates from the 4S LiFePO4 battery and is routed through a single monitored path before reaching a central DC fuse block. Every load is individually fused.
 
-### Power Flow Path
+### Power Flow Path (Discharge)
 
 ```
-Battery Pack (+) → BMS Output (+) → Main Current Shunt → 25A Main Inline Fuse → System INA226 (IN+)
+Battery Pack (+) → BMS Output (+) → 25A Main Inline Fuse → System INA226 (IN+)
 System INA226 (IN-) → DC Fuse Block Positive (+) Feed
 
-Battery Pack (-) → BMS Output (-) → DC Fuse Block Negative (-) Bus
+Battery Pack (-) → BMS Output (-) → Main Current Shunt → DC Fuse Block Negative (-) Bus
 ```
 
-The System INA226 sits between the main fuse and the fuse block so it captures **all** downstream current draw (radio, Pi, fan, sensors).
+The Main Current Shunt sits on the negative rail between the BMS output and the fuse block negative bus. All load current and charge current flows through this shunt, enabling the System INA226 to read **bidirectional current** (positive values = discharge/load, negative values = incoming charge).
+
+### Charging Path (DC Input)
+
+```
+External Anderson Powerpole Input → [Optional 15A Inline Fuse] → DC-DC Buck-Boost Charger Input
+Charger Output (+) → Main Positive Bus (battery side of 25A main fuse)
+Charger Output (-) → System/Load side of Main Current Shunt
+```
+
+**Do NOT wire the charger negative directly to the battery terminal. It must pass through the shunt so the telemetry system can measure the incoming charge current.**
+
+The DC-DC Buck-Boost Charge Controller is configured for **14.6V CC/CV** (4S LiFePO4 profile). It accepts a wide range of DC inputs (10–30V) from automotive chargers, vehicle accessory ports, or generic power supplies.
 
 ### Fuse Block Circuit Assignments
 
@@ -117,3 +129,35 @@ Fan (-) ──→ DC Fuse Block Negative (-) Bus
 
 * **No GPIO control:** The thermal switch is a passive hardware failsafe. It does not depend on the Raspberry Pi being operational or any software running. If the Pi crashes or the telemetry daemon hangs, the fan still activates.
 * **No RF noise:** Bimetallic switches produce no switching transients. Unlike PWM or relay-based fan control, this approach introduces zero RF interference — critical for HF operation on the Xiegu G90.
+
+---
+
+## 8. Universal DC Charging Circuit
+
+A DC-DC Buck-Boost Charge Controller allows the battery to be charged from any unconditioned DC source via an external Anderson Powerpole connector on the enclosure panel.
+
+### Circuit Wiring
+
+```
+Panel Anderson Powerpole (+) ──→ [Optional 15A Inline Fuse] ──→ Charger Input (+)
+Panel Anderson Powerpole (-) ──→ Charger Input (-)
+
+Charger Output (+) ──→ Main Positive Bus (battery side of 25A main fuse)
+Charger Output (-) ──→ System/Load side of Main Current Shunt
+```
+
+**Do NOT wire the charger negative directly to the battery terminal. It must connect to the system/load side of the main current shunt so the INA226 can measure incoming charge current.**
+
+### Component Details
+
+* **Charge Controller:** DC-DC Buck-Boost module configured for **14.6V CC/CV** output (4S LiFePO4 charging profile). Must accept 10–30V input range to support automotive 12V, vehicle accessory 13.8V, and bench supply sources.
+* **Input Fuse:** Optional 15A inline ATC/ATO fuse on the positive input lead. Protects the external source and wiring from a charger fault.
+* **Panel Connector:** Anderson Powerpole connector pair mounted on the enclosure panel. Use 30A-rated contacts with 10 AWG wire for the input run.
+
+### RFI Considerations
+
+The charge controller is a switching converter and **must** be shielded or inherently RF-quiet to prevent broadband interference on HF:
+
+* Wrap the module in **grounded copper foil tape** (same technique used for the buck converter).
+* Add **Mix 31 ferrite beads** on both input and output leads.
+* If interference persists during charging, disconnect the charger while operating the Xiegu G90 on receive-sensitive modes (FT8, CW, SSB).

@@ -25,6 +25,8 @@ This is the complete parts list required to build the Pi Zero W telemetry system
 * **DC Fuse Block:** 12V Marine-grade Blade Fuse Block with negative bus (minimum 4 circuits).
 * **Blade Fuses (ATC/ATO):** 1x 10A (G90), 1x 3A (buck converter), 2x 1A (fan circuit, telemetry sensors).
 * **Step-Down Converter:** 12V to 5V Buck Converter (Minimum 3A output).
+* **DC Charge Controller:** DC-DC Buck-Boost module, adjustable output, configured for 14.6V CC/CV (4S LiFePO4 profile). Must accept 10–30V input.
+* **Charger Input Fuse:** 15A Inline ATC/ATO blade fuse holder (optional, on charger positive input lead).
 * **Wire:** 10 AWG silicone wire (Main power runs), 22 AWG solid-core wire (Telemetry).
 
 ## 4. Thermal Management
@@ -48,4 +50,5 @@ This is the complete parts list required to build the Pi Zero W telemetry system
 ## 6. Panel Connectors
 
 * **Gadget Mode Data:** USB-C Panel Mount / Bulkhead Connector (with breakout pads for D+/D-).
+* **DC Charge Input:** Anderson PowerPole panel mount connector pair (30A-rated contacts) for external DC charging.
 * **Power Outputs:** Anderson PowerPole panel mounts and/or 12V Marine "Cigarette" sockets.
