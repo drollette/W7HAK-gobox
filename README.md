@@ -334,6 +334,8 @@ You will need:
 ```
 goBox/
 ├── 3d_models/          # ABS compression-frame parts for the battery pack
+├── pcb/
+│   └── w7hak_hat/      # KiCad project for custom Pi Zero W telemetry HAT
 ├── wiring_diagrams/    # Schematics (resistor ladder, INA226 hookup)
 ├── scripts/
 │   ├── telemetry.py    # Main telemetry daemon
