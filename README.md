@@ -200,7 +200,7 @@ sudo bash scripts/setup_pi.sh
 
 This will:
 - Install system packages (`python3-pip`, `i2c-tools`, `python3-smbus`)
-- Install Python libraries (`adafruit-circuitpython-ads1x15`, `adafruit-circuitpython-ina226`, `influxdb`)
+- Install Python libraries from `requirements.txt` via `pip3 install -r requirements.txt`
 - Install, enable, and start the `gobox_telemetry` systemd service
 
 ### 4. Verify the service
@@ -233,6 +233,16 @@ Because 1% tolerance resistors and shunt components still vary slightly, the def
 - After replacing any resistors in the voltage divider ladder
 - After replacing the INA226 shunt resistor
 - If Grafana cell voltage readings drift from multimeter measurements
+
+### Live Sensor Monitor
+
+Before running the interactive calibration, use `test_sensors.py` to verify all sensors are wired correctly and producing plausible readings. It prints a live, auto-refreshing readout of all cell voltages, INA226 current/power, and DS18B20 temperatures every second:
+
+```bash
+python3 scripts/test_sensors.py
+```
+
+Press `Ctrl+C` to quit. This tool is also useful during bench testing to watch values change in real time as you adjust loads or connections.
 
 ### Running the Calibration Script
 
@@ -340,6 +350,7 @@ goBox/
 ├── scripts/
 │   ├── telemetry.py    # Main telemetry daemon
 │   ├── calibrate.py    # Interactive calibration utility
+│   ├── test_sensors.py # Live sensor monitor for bench testing and calibration
 │   └── setup_pi.sh     # One-shot provisioning script
 └── systemd/
     └── gobox_telemetry.service   # systemd unit file

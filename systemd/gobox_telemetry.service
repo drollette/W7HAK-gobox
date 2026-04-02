@@ -5,7 +5,7 @@ After=multi-user.target network.target
 [Service]
 Type=simple
 User=pi
-ExecStart=/usr/bin/python3 /home/pi/goBox/scripts/telemetry.py
+ExecStart=/usr/bin/python3 /home/pi/W7HAK-gobox/scripts/telemetry.py
 Restart=on-failure
 RestartSec=10
 

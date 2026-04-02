@@ -23,26 +23,38 @@ apt install -y \
     i2c-tools \
     python3-smbus
 
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+
 # ---------------------------------------------------------------------------
 # Python dependencies
 # ---------------------------------------------------------------------------
 
 echo "==> Installing Python dependencies from requirements.txt..."
-pip3 install -r /home/pi/goBox/requirements.txt
+pip3 install -r "$REPO_DIR/requirements.txt"
 
 # ---------------------------------------------------------------------------
 # Install and enable the systemd service
 # ---------------------------------------------------------------------------
 
-REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SERVICE_SRC="$REPO_DIR/systemd/gobox_telemetry.service"
 SERVICE_DST="/etc/systemd/system/gobox_telemetry.service"
 
 echo "==> Installing systemd service from $SERVICE_SRC..."
 cp "$SERVICE_SRC" "$SERVICE_DST"
 
-# Update ExecStart path to match actual repo location
-sed -i "s|/home/pi/goBox|$REPO_DIR|g" "$SERVICE_DST"
+# Update ExecStart path to match actual repo location.
+# Support both the placeholder template and historical hardcoded paths.
+sed -i \
+    -e "s|__REPO_DIR__|$REPO_DIR|g" \
+    -e "s|/home/pi/goBox|$REPO_DIR|g" \
+    -e "s|/home/pi/W7HAK-gobox|$REPO_DIR|g" \
+    "$SERVICE_DST"
+
+if ! grep -q "$REPO_DIR/scripts/telemetry.py" "$SERVICE_DST"; then
+    echo "[ERROR] Failed to configure ExecStart path in $SERVICE_DST"
+    exit 1
+fi
 
 systemctl daemon-reload
 systemctl enable gobox_telemetry.service
